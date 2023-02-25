@@ -1,6 +1,8 @@
-### Reddit Clone
+# Reddit Clone
 
-# Backend
+Focus on the backend, but also have a minimal frontend and full authentication/authorization.
+
+### Backend
 
 - Typescript
 - Node.js
@@ -13,7 +15,7 @@
 
 - Redis
 
-# Frontend
+### Frontend
 
 - Typescript
 
