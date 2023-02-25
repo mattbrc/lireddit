@@ -2,12 +2,21 @@
 
 # Backend
 
-- Postgresql
-- MikroORM
-- Graphql
-- TS / Node
+- Typescript
+- Node.js
+- Apollo
+- TypegraphQL
+
+* Postgresql
+* MikroORM
+* Graphql
+
+- Redis
 
 # Frontend
 
-- TS / React
+- Typescript
+
+* React
+
 - NextJS
