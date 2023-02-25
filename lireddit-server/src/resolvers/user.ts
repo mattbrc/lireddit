@@ -1,6 +1,6 @@
 import { User } from "../entities/User";
 import { MyContext } from "src/types";
-import { Resolver, Mutation, InputType, Field, Arg, Ctx, ObjectType } from "type-graphql";
+import { Resolver, Mutation, InputType, Field, Arg, Ctx, ObjectType, Query } from "type-graphql";
 import argon2 from 'argon2';
 
 @InputType()
@@ -30,10 +30,28 @@ class UserResponse {
 
 @Resolver()
 export class UserResolver {
+  @Query(() => User, { nullable: true })
+  async me(
+    @Ctx() { em, req }: MyContext
+  ) {
+    console.log("session: ", req.session);
+    // you are not logged in
+    if (!req.session!.userId) {
+      return null;
+    }
+
+    // store user id session
+    // this will set a cookie on the user
+    // keep them logged in
+    const user = await em.findOne(User, { id: req.session!.userId });
+
+    return user;
+  }
+
   @Mutation(() => UserResponse)
   async register(
     @Arg('options') options: UsernamePasswordInput,
-    @Ctx() { em }: MyContext
+    @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> {
     if (options.username.length <= 2) {
       return {
@@ -59,14 +77,29 @@ export class UserResolver {
       updatedAt: "",
       password: hashedPassword
     });
-    await em.persistAndFlush(user);
+    try {
+      await em.persistAndFlush(user);
+    } catch(err) {
+      // duplicate username error
+      if (err.code === '23505' || err.detail.includes('already exists')) {
+        return {
+          errors: [{
+            field: 'username',
+            message: "username already exists",
+          }],
+        };
+      }
+    }
+
+    req.session.userId = user.id;
+
     return { user };
   }
 
   @Mutation(() => UserResponse)
   async login(
     @Arg('options') options: UsernamePasswordInput,
-    @Ctx() { em }: MyContext
+    @Ctx() { em, req }: MyContext
   ): Promise<UserResponse> {
     const user = await em.findOne(User, { username: options.username })
     if (!user) {
@@ -86,6 +119,9 @@ export class UserResolver {
         }],
       };
     }
+
+    req.session.userId = user.id;
+    // req.session.randomKey = "matt is cool";
 
     return {
       user

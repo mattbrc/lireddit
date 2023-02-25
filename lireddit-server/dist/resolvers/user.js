@@ -59,7 +59,15 @@ UserResponse = __decorate([
     (0, type_graphql_1.ObjectType)()
 ], UserResponse);
 let UserResolver = class UserResolver {
-    async register(options, { em }) {
+    async me({ em, req }) {
+        console.log("session: ", req.session);
+        if (!req.session.userId) {
+            return null;
+        }
+        const user = await em.findOne(User_1.User, { id: req.session.userId });
+        return user;
+    }
+    async register(options, { em, req }) {
         if (options.username.length <= 2) {
             return {
                 errors: [{
@@ -83,10 +91,23 @@ let UserResolver = class UserResolver {
             updatedAt: "",
             password: hashedPassword
         });
-        await em.persistAndFlush(user);
+        try {
+            await em.persistAndFlush(user);
+        }
+        catch (err) {
+            if (err.code === '23505' || err.detail.includes('already exists')) {
+                return {
+                    errors: [{
+                            field: 'username',
+                            message: "username already exists",
+                        }],
+                };
+            }
+        }
+        req.session.userId = user.id;
         return { user };
     }
-    async login(options, { em }) {
+    async login(options, { em, req }) {
         const user = await em.findOne(User_1.User, { username: options.username });
         if (!user) {
             return {
@@ -105,11 +126,19 @@ let UserResolver = class UserResolver {
                     }],
             };
         }
+        req.session.userId = user.id;
         return {
             user
         };
     }
 };
+__decorate([
+    (0, type_graphql_1.Query)(() => User_1.User, { nullable: true }),
+    __param(0, (0, type_graphql_1.Ctx)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], UserResolver.prototype, "me", null);
 __decorate([
     (0, type_graphql_1.Mutation)(() => UserResponse),
     __param(0, (0, type_graphql_1.Arg)('options')),

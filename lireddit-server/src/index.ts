@@ -8,6 +8,10 @@ import { buildSchema } from 'type-graphql';
 import { HelloResolver } from './resolvers/hello';
 import { PostResolver } from './resolvers/post';
 import { UserResolver } from './resolvers/user';
+import { createClient } from 'redis';
+import session from 'express-session';
+import connectRedis from 'connect-redis';
+import { MyContext } from "./types";
 
 const main = async () => {
   const orm = await MikroORM.init(microConfig);
@@ -16,12 +20,35 @@ const main = async () => {
 
   const app = express();
 
+  const RedisStore = connectRedis(session)
+  const redisClient = createClient({ legacyMode: true })
+  redisClient.connect().catch(console.error);
+
+  app.use(
+    session({
+      name: 'qid',
+      store: new RedisStore({ 
+        client: redisClient as any, 
+        disableTouch: true
+      }),
+      cookie: {
+        maxAge: 1000 * 60 * 60 * 24 * 365 * 10, // 10 years
+        httpOnly: true,
+        sameSite: 'lax', // csrf
+        secure: __prod__, // cookie only works in https
+      },
+      saveUninitialized: false,
+      secret: 'environmentvariablelater',
+      resave: false,
+    }),
+  );
+
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
       resolvers: [UserResolver, HelloResolver, PostResolver],
       validate: false,
     }),
-    context: () => ({ em: emFork }),
+    context: ({req, res}): MyContext => ({ em: emFork, req, res }),
   });
   
   app.listen(4000, () => {
