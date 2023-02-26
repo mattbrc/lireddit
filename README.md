@@ -8,9 +8,9 @@ Focus on the backend, but also have a minimal frontend and full authentication/a
 - Node.js
 - Apollo
 - TypegraphQL
+- Graphql
 - Postgresql
 - MikroORM
-- Graphql
 - Redis
 
 ### Frontend
@@ -18,3 +18,4 @@ Focus on the backend, but also have a minimal frontend and full authentication/a
 - Typescript
 - React
 - NextJS
+- Chakra UI
