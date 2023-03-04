@@ -2,6 +2,7 @@ import { Box, Link, Flex, Button } from "@chakra-ui/react";
 import React from "react";
 import NextLink from "next/link";
 import { useLogoutMutation, useMeQuery } from "../gen/graphql";
+// import { isServer } from "../utils/isServer";
 
 interface NavbarProps {}
 
@@ -14,7 +15,7 @@ export const Navbar: React.FC<NavbarProps> = ({}) => {
     // user not logged in
   } else if (!data?.me) {
     body = (
-      <>
+      <div>
         <NextLink href="/login" passHref legacyBehavior>
           <Link color="white" mr={2}>
             login
@@ -25,7 +26,7 @@ export const Navbar: React.FC<NavbarProps> = ({}) => {
             register
           </Link>
         </NextLink>
-      </>
+      </div>
     );
     // user is logged in
   } else {
